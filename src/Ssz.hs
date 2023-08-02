@@ -20,7 +20,7 @@ instance Ssz U64 where
     sszFixedLen = 8
 
 instance Encode U64 where
-    sszEncode = BSB.toLazyByteString . BSB.word64LE
+    sszEncodeBuilder = BSB.word64LE
     sszBytesLen _ = 8
 
 instance Decode U64 where
@@ -33,7 +33,7 @@ instance Ssz U8 where
     sszFixedLen = 1
 
 instance Encode U8 where
-    sszEncode = BS.singleton
+    sszEncodeBuilder = BSB.word8
     sszBytesLen _ = 1
 
 instance Decode U8 where
@@ -56,7 +56,7 @@ sequenceSszBytesLen (seq :: t a) =
 sequenceSszEncodeBuilder :: (Traversable t, Encode a) => t a -> BSB.Builder
 sequenceSszEncodeBuilder (seq :: t a) =
     if isSszFixedLen @a then
-        foldl mappend mempty (fmap (BSB.lazyByteString . sszEncode) seq)
+        foldl mappend mempty (fmap sszEncodeBuilder seq)
     else
         let len = fromIntegral (length seq)
             offset = len * fromIntegral bytesPerLengthOffset
@@ -64,5 +64,5 @@ sequenceSszEncodeBuilder (seq :: t a) =
             sszEncoderFinalize (foldl sszEncoderAppend (sszEncoderNew offset) seq)
 
 instance (Encode a) => Encode [a] where
-    sszEncode = BSB.toLazyByteString . sequenceSszEncodeBuilder
+    sszEncodeBuilder = sequenceSszEncodeBuilder
     sszBytesLen = sequenceSszBytesLen
