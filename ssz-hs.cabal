@@ -1,0 +1,48 @@
+cabal-version:      2.4
+name:               ssz-hs
+version:            0.1.0.0
+synopsis:
+
+-- A longer description of the package.
+-- description:
+homepage:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+license:            MIT
+license-file:       LICENSE
+author:             Michael Sproul
+maintainer:         michael@sigmaprime.io
+
+-- A copyright notice.
+-- copyright:
+-- category:
+extra-source-files: CHANGELOG.md
+
+library
+    exposed-modules: Ssz
+
+    -- Modules included in this library but not exported.
+    other-modules: Common, Encode, Encoder
+
+    -- LANGUAGE extensions used by modules in this package.
+    default-extensions:
+        TypeApplications,
+        AllowAmbiguousTypes,
+        TypeSynonymInstances,
+        TypeFamilies,
+        ScopedTypeVariables
+    build-depends:
+        base ^>=4.16.4.0,
+        bytestring ^>=0.12.0.0,
+        binary ^>=0.8.9.1
+
+    hs-source-dirs:   src
+    default-language: Haskell2010
+
+test-suite ssz-hs-test
+    default-language: Haskell2010
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          MyLibTest.hs
+    build-depends:    base ^>=4.16.4.0
