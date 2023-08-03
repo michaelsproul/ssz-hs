@@ -32,7 +32,7 @@ getSszItem maybeLen = do
         Just len -> getLazyByteString len
         Nothing -> getRemainingLazyByteString
     case sszDecode byteString of
-        Left err -> fail (show err) -- this is a bit ugly
+        Left err -> fail (show err)
         Right val -> return val
 
 -- TODO: checked subtraction
@@ -41,6 +41,7 @@ offsetDiff [x] = Nothing
 offsetDiff [x, y] = Just (fromIntegral (y - x))
 offsetDiff _ = Nothing
 
+-- TODO: reconsider error handling (use of fail)
 getListOfVariableLengthItems :: (Traversable t, Applicative t, Monoid (t a), Decode a) => Maybe U32 -> Get (t a)
 getListOfVariableLengthItems maxItems = do
     empty <- isEmpty
@@ -48,14 +49,16 @@ getListOfVariableLengthItems maxItems = do
     then return mempty
     else do
         firstOffset <- lookAhead getOffset
-        let numItems = firstOffset `div` fromIntegral bytesPerLengthOffset
-        if fromMaybe False (fmap (numItems>) maxItems)
-        then fail (show TooManyItems) -- kinda nasty
+        if firstOffset `mod` fromIntegral bytesPerLengthOffset /= 0 || firstOffset == 0 then
+            fail $ "invalid first offset: " ++ show firstOffset
         else do
-            offsets :: [U32] <- forM [1..numItems] (\_ -> getOffset)
-            -- TODO: sanitize offsets
-            let lengths = map offsetDiff (pairs offsets)
-            items <- foldM (\xs maybeLen -> do
-                x <- getSszItem maybeLen
-                return (mappend xs (pure x))) mempty lengths
-            return items
+            let numItems = firstOffset `div` fromIntegral bytesPerLengthOffset
+            if fromMaybe False (fmap (numItems>) maxItems)
+            then fail (show TooManyItems)
+            else do
+                offsets :: [U32] <- forM [1..numItems] (\_ -> getOffset)
+                let lengths = map offsetDiff (pairs offsets)
+                items <- foldM (\xs maybeLen -> do
+                    x <- getSszItem maybeLen
+                    return (mappend xs (pure x))) mempty lengths
+                return items

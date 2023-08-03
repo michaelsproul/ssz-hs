@@ -1,4 +1,4 @@
-module Ssz where
+module Ssz (Encode, Decode, sszEncode, sszDecode, U8, U64) where
 
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.ByteString.Builder as BSB

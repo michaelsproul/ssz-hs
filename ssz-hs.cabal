@@ -31,11 +31,12 @@ library
         AllowAmbiguousTypes,
         TypeSynonymInstances,
         TypeFamilies,
-        ScopedTypeVariables
+        ScopedTypeVariables,
+        OverloadedStrings
     build-depends:
         base ^>=4.16.4.0,
         bytestring ^>=0.12.0.0,
-        binary ^>=0.8.9.1
+        binary ^>=0.8.9.1,
 
     hs-source-dirs:   src
     default-language: Haskell2010
@@ -44,5 +45,19 @@ test-suite ssz-hs-test
     default-language: Haskell2010
     type:             exitcode-stdio-1.0
     hs-source-dirs:   test
-    main-is:          MyLibTest.hs
-    build-depends:    base ^>=4.16.4.0
+    main-is:          Test.hs
+    default-extensions:
+        TypeApplications,
+        AllowAmbiguousTypes,
+        TypeSynonymInstances,
+        TypeFamilies,
+        ScopedTypeVariables,
+        OverloadedStrings
+    build-depends:
+        ssz-hs,
+        base ^>=4.16.4.0,
+        bytestring ^>=0.12.0.0,
+        binary ^>=0.8.9.1,
+        tasty ^>=1.4.3,
+        tasty-quickcheck ^>= 0.10.2
+        -- quickcheck-instances ^>= 0.3.29.1
