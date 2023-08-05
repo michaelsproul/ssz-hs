@@ -37,7 +37,6 @@ getVariableLengths decoder = snd (go Nothing [] decoder)
 
 class GEncode f where
     gsszEncoderAppend :: SszEncoder -> f a -> SszEncoder
-    gsszBytesLen :: f a -> U64
 
 class GDecode f where
     -- Decode an offset or fixed-length field, and return the remainder of the input.
@@ -54,7 +53,6 @@ class GDecode f where
 -- TODO: SSZ unit type
 instance GEncode U1 where
     gsszEncoderAppend _ U1 = error "unsupported: U1"
-    gsszBytesLen U1 = error "unsupported: U1"
 
 instance GDecode U1 where
     gsszBeginDecode _ = error "unsupported: U1"
@@ -63,7 +61,6 @@ instance GDecode U1 where
 -- | Products: encode multiple arguments to constructors
 instance (GEncode a, GEncode b) => GEncode (a :*: b) where
     gsszEncoderAppend enc (a :*: b) = gsszEncoderAppend (gsszEncoderAppend enc a) b
-    gsszBytesLen (a :*: b) = gsszBytesLen a + gsszBytesLen b -- FIXME: probably wrong
 
 instance (GDecode a, GDecode b) => GDecode (a :*: b) where
     gsszBeginDecode bytes = do
@@ -78,7 +75,6 @@ instance (GDecode a, GDecode b) => GDecode (a :*: b) where
 -- | Sums: encode choice between constructors
 instance (GEncode a, GEncode b) => GEncode (a :+: b) where
     gsszEncoderAppend _ _ = error "SSZ unions not implemented"
-    gsszBytesLen _ = error "SSZ unions not implemented"
 
 instance (GDecode a, GDecode b) => GDecode (a :+: b) where
     gsszBeginDecode _ = error "SSZ unions not implemented"
@@ -87,7 +83,6 @@ instance (GDecode a, GDecode b) => GDecode (a :+: b) where
 -- | Meta-information (constructor names, etc.)
 instance (GEncode a) => GEncode (M1 i c a) where
     gsszEncoderAppend enc (M1 x) = gsszEncoderAppend enc x
-    gsszBytesLen (M1 x) = gsszBytesLen x
 
 instance (GDecode a) => GDecode (M1 i c a) where
     gsszBeginDecode bytes = gsszBeginDecode @a bytes
@@ -98,7 +93,6 @@ instance (GDecode a) => GDecode (M1 i c a) where
 -- | Constants, additional parameters and recursion of kind *
 instance (Encode a) => GEncode (K1 i a) where
     gsszEncoderAppend enc (K1 x) = sszEncoderAppend enc x
-    gsszBytesLen (K1 x) = sszBytesLen x
 
 instance (Decode a) => GDecode (K1 i a) where
     gsszBeginDecode bytes =
@@ -130,7 +124,6 @@ deriveEncode ty =
   [d|
     instance Encode $(ty) where
         sszEncodeBuilder x = sszEncoderFinalize (gsszEncoderAppend (sszEncoderNew 0) (from x))
-        sszBytesLen x = gsszBytesLen (from x)
   |]
 
 deriveDecode :: Q Type -> Q [Dec]

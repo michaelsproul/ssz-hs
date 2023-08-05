@@ -25,14 +25,6 @@ instance (Ssz a) => Ssz [a] where
     isSszFixedLen = False
     sszFixedLen = bytesPerLengthOffset
 
-sequenceSszBytesLen :: (Traversable t, Encode a) => t a -> U64
-sequenceSszBytesLen (seq :: t a) =
-    let len = fromIntegral (length seq) in
-    if isSszFixedLen @a then
-        len * sszFixedLen @a
-    else
-        sum (fmap sszBytesLen seq) + bytesPerLengthOffset * len
-
 sequenceSszEncodeBuilder :: (Traversable t, Encode a) => t a -> BSB.Builder
 sequenceSszEncodeBuilder (seq :: t a) =
     if isSszFixedLen @a then
@@ -45,7 +37,6 @@ sequenceSszEncodeBuilder (seq :: t a) =
 
 instance (Encode a) => Encode [a] where
     sszEncodeBuilder = sequenceSszEncodeBuilder
-    sszBytesLen = sequenceSszBytesLen
 
 instance (Decode a) => Decode [a] where
     sszDecode bytes =

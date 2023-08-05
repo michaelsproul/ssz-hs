@@ -14,7 +14,6 @@ instance Ssz U64 where
 
 instance Encode U64 where
     sszEncodeBuilder = BSB.word64LE
-    sszBytesLen _ = 8
 
 instance Decode U64 where
     sszDecode = decodeOrError getWord64le
@@ -25,7 +24,6 @@ instance Ssz U8 where
 
 instance Encode U8 where
     sszEncodeBuilder = BSB.word8
-    sszBytesLen _ = 1
 
 instance Decode U8 where
     sszDecode = decodeOrError getWord8
