@@ -23,7 +23,7 @@ library
     exposed-modules: Ssz
 
     -- Modules included in this library but not exported.
-    other-modules: Common, Decode, Encode, Encoder
+    other-modules: Common, Decode, Derive, Encode, Encoder, PrimitiveTypes
 
     -- LANGUAGE extensions used by modules in this package.
     default-extensions:
@@ -32,11 +32,19 @@ library
         TypeSynonymInstances,
         TypeFamilies,
         ScopedTypeVariables,
-        OverloadedStrings
+        OverloadedStrings,
+        TypeOperators,
+        TupleSections,
+        DeriveGeneric,
+        QuasiQuotes,
+        TemplateHaskell,
+        DerivingStrategies,
+        DerivingVia
     build-depends:
         base ^>=4.16.4.0,
         bytestring ^>=0.12.0.0,
         binary ^>=0.8.9.1,
+        template-haskell ^>=2.18.0.0
 
     hs-source-dirs:   src
     default-language: Haskell2010
@@ -46,18 +54,27 @@ test-suite ssz-hs-test
     type:             exitcode-stdio-1.0
     hs-source-dirs:   test
     main-is:          Test.hs
+    other-modules: TestTypes
     default-extensions:
         TypeApplications,
         AllowAmbiguousTypes,
         TypeSynonymInstances,
         TypeFamilies,
         ScopedTypeVariables,
-        OverloadedStrings
+        OverloadedStrings,
+        TypeOperators,
+        TupleSections,
+        DeriveGeneric,
+        QuasiQuotes,
+        TemplateHaskell,
+        DerivingStrategies,
+        DerivingVia
     build-depends:
         ssz-hs,
         base ^>=4.16.4.0,
         bytestring ^>=0.12.0.0,
         binary ^>=0.8.9.1,
         tasty ^>=1.4.3,
-        tasty-quickcheck ^>= 0.10.2
+        tasty-quickcheck ^>= 0.10.2,
+        generic-arbitrary ^>= 1.0.1
         -- quickcheck-instances ^>= 0.3.29.1

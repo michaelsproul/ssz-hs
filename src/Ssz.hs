@@ -1,37 +1,25 @@
-module Ssz (Encode, Decode, sszEncode, sszDecode, U8, U64) where
+module Ssz
+  (
+    Ssz,
+    Encode,
+    Decode,
+    isSszFixedLen,
+    sszFixedLen,
+    sszEncode,
+    sszDecode,
+    deriveSszEncodeDecode,
+    U8,
+    U64,
+  ) where
 
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.ByteString.Builder as BSB
-import Data.Binary (encode)
-import Data.Binary.Get (getWord64le, getWord8)
-import Data.Either (Either, fromRight)
 import Data.Monoid (mempty, mappend)
 import Common
 import Encode
 import Decode
 import Encoder (sszEncoderNew, sszEncoderAppend, sszEncoderFinalize)
-
-instance Ssz U64 where
-    isSszFixedLen = True
-    sszFixedLen = 8
-
-instance Encode U64 where
-    sszEncodeBuilder = BSB.word64LE
-    sszBytesLen _ = 8
-
-instance Decode U64 where
-    sszDecode = decodeOrError getWord64le
-
-instance Ssz U8 where
-    isSszFixedLen = True
-    sszFixedLen = 1
-
-instance Encode U8 where
-    sszEncodeBuilder = BSB.word8
-    sszBytesLen _ = 1
-
-instance Decode U8 where
-    sszDecode = decodeOrError getWord8
+import Derive (deriveSszEncodeDecode)
 
 instance (Ssz a) => Ssz [a] where
     isSszFixedLen = False
