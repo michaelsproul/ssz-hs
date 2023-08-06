@@ -35,6 +35,10 @@ getVariableLengths decoder = snd (go Nothing [] decoder)
             let length = offset - latestOffset -- TODO: checked arith
             in (Just offset, lengths ++ [length]) -- TODO: expensive concat
 
+class GSsz (f :: * -> *) where
+    gisSszFixedLen :: Bool
+    gsszFixedLen :: U64
+
 class GEncode f where
     gsszEncoderAppend :: SszEncoder -> f a -> SszEncoder
 
@@ -51,6 +55,10 @@ class GDecode f where
 
 -- | Unit: used for constructors without arguments
 -- TODO: SSZ unit type
+instance GSsz U1 where
+    gisSszFixedLen = undefined
+    gsszFixedLen = undefined
+
 instance GEncode U1 where
     gsszEncoderAppend _ U1 = error "unsupported: U1"
 
@@ -59,6 +67,14 @@ instance GDecode U1 where
     gsszEndDecode _ _ = error "unsupported: U1"
 
 -- | Products: encode multiple arguments to constructors
+instance (GSsz a, GSsz b) => GSsz (a :*: b) where
+    gisSszFixedLen = gisSszFixedLen @a && gisSszFixedLen @b
+    gsszFixedLen =
+        if gisSszFixedLen @(a :*: b) then
+            gsszFixedLen @a + gsszFixedLen @b
+        else
+            bytesPerLengthOffset
+
 instance (GEncode a, GEncode b) => GEncode (a :*: b) where
     gsszEncoderAppend enc (a :*: b) = gsszEncoderAppend (gsszEncoderAppend enc a) b
 
@@ -73,6 +89,10 @@ instance (GDecode a, GDecode b) => GDecode (a :*: b) where
         return (xa :*: xb, variableBytesRemaining', lengthsRemaining')
 
 -- | Sums: encode choice between constructors
+instance (GSsz a, GSsz b) => GSsz (a :+: b) where
+    gisSszFixedLen = error "SSZ unions not implemented"
+    gsszFixedLen = error "SSZ unions not implemented"
+
 instance (GEncode a, GEncode b) => GEncode (a :+: b) where
     gsszEncoderAppend _ _ = error "SSZ unions not implemented"
 
@@ -81,6 +101,10 @@ instance (GDecode a, GDecode b) => GDecode (a :+: b) where
     gsszEndDecode _ _ = error "SSZ unions not implemented"
 
 -- | Meta-information (constructor names, etc.)
+instance (GSsz a) => GSsz (M1 i c a) where
+    gisSszFixedLen = gisSszFixedLen @a
+    gsszFixedLen = gsszFixedLen @a
+
 instance (GEncode a) => GEncode (M1 i c a) where
     gsszEncoderAppend enc (M1 x) = gsszEncoderAppend enc x
 
@@ -91,6 +115,10 @@ instance (GDecode a) => GDecode (M1 i c a) where
         return (M1 xa, bytesRemaining, lengthsRemaining)
 
 -- | Constants, additional parameters and recursion of kind *
+instance (Ssz a) => GSsz (K1 i a) where
+    gisSszFixedLen = isSszFixedLen @a
+    gsszFixedLen = sszFixedLen @a
+
 instance (Encode a) => GEncode (K1 i a) where
     gsszEncoderAppend enc (K1 x) = sszEncoderAppend enc x
 
@@ -119,6 +147,14 @@ instance (Decode a) => GDecode (K1 i a) where
         value <- sszDecode variableBytes
         return (K1 value, BS.empty, [])
 
+deriveSsz :: Q Type -> Q [Dec]
+deriveSsz ty =
+  [d|
+    instance Ssz $(ty) where
+        isSszFixedLen = gisSszFixedLen @(Rep $(ty))
+        sszFixedLen = gsszFixedLen @(Rep $(ty))
+  |]
+
 deriveEncode :: Q Type -> Q [Dec]
 deriveEncode ty =
   [d|
@@ -142,4 +178,4 @@ deriveDecode ty =
   |]
 
 deriveSszEncodeDecode :: Q Type -> Q [Dec]
-deriveSszEncodeDecode ty = deriveEncode ty <> deriveDecode ty
+deriveSszEncodeDecode ty = deriveSsz ty <> deriveEncode ty <> deriveDecode ty

@@ -16,11 +16,6 @@ instance Arbitrary Checkpoint where
   arbitrary = genericArbitrary
   shrink = genericShrink
 
--- TODO: derive Ssz class
-instance Ssz Checkpoint where
-    isSszFixedLen = True
-    sszFixedLen = 16
-
 deriveSszEncodeDecode [t|Checkpoint|]
 
 -- Complex type with interleaved fixed and variable fields.
@@ -38,10 +33,5 @@ data Mixed = Mixed
 instance Arbitrary Mixed where
   arbitrary = genericArbitrary
   shrink = genericShrink
-
--- TODO: derive Ssz class
-instance Ssz Mixed where
-    isSszFixedLen = False
-    sszFixedLen = undefined
 
 deriveSszEncodeDecode [t|Mixed|]
